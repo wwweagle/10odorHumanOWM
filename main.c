@@ -5,12 +5,12 @@
  * Created on August 7, 2017, 9:47 AM
  */
 
-#include <i2c.h>
+
 #include <stdlib.h>
 
 #include "utils.h"
 #include "hal.h"
-#include "lcdi2c.h"
+
 
 void callFunc(int n);
 void testOneValve(int n, int iti, int repeat);
@@ -32,13 +32,6 @@ int main(void) {
         callFunc(getFuncNumber(2, "Main Func?"));
     }
     return 0;
-}
-
-void sendChart(int val, int idx) {
-    int high = ((val & 0x0fc0) >> 6)+(idx == 1 ? 0x40 : 0);
-    serialSend(SpChartHigh, high);
-    int low = (val & 0x3f)+(idx == 1 ? 0x40 : 0);
-    serialSend(SpChartLow, low);
 }
 
 void addHOdors(int isDPA) {
@@ -254,7 +247,7 @@ void waterNResult_H(int sampleIndex, int testIndex, int id, int rewardWindow) {
     }
 }
 
-static void xdTrial_H(int sampleIndex, int testIndex) {
+static void human_Trial(int sampleIndex, int testIndex) {
     taskTimeCounter = millisCounter;
     splash_G2("Sample", "");
     waitTaskTimer(3500u);
@@ -475,7 +468,7 @@ void DNMSessionsHuman(int totalSession) {
                 }
                 testIndex = falseIdx;
             }
-            xdTrial_H(sampleIndex, testIndex);
+            human_Trial(sampleIndex, testIndex);
             currentTrial++;
         }
         serialSend(SpSess, 0);

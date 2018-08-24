@@ -63,5 +63,10 @@ void write_eeprom_G2(int offset, int value) ;
 
 int read_eeprom_G2(int offset) ;
 
+void splash_G2(const char* line1, const char* line2);
+void lcdWriteNumber_G2(int val, int x, int y);
+void LCDhome(void);
+void LCDclear(void);
+
 #endif	//HAL_H
 

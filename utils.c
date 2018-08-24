@@ -9,7 +9,6 @@
 #include "xc.h"
 #include "utils.h"
 #include "hal.h"
-#include "lcdi2c.h"
 #include <stdlib.h>
 
 void LCD_Write_Char(char message) {
