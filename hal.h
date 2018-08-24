@@ -52,8 +52,7 @@ void wait_ms(int time);
 void wait_Sec(int time);
 void serialSend(int u2Type, int u2Value);
 void initUART2(void);
-void set4076_4bit(int val);
-void muxDis(int val);
+
 void initADC(void);
 void ioRecycle(void);
 int checkKeyboard(void);

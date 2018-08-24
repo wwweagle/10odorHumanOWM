@@ -75,7 +75,6 @@ void splash_G2(const char* line1, const char* line2) {
     LCD_Write_Str(line1);
     LCDsetCursor(0, 1);
     LCD_Write_Str(line2);
-    wait_Sec(1);
 }
 
 
@@ -112,13 +111,12 @@ TASK_H taskParamH = {
     .odorPairs = 2,
     .samples = NULL,
     .tests = NULL,
-    .odorlength = NULL,
+    .odorlength = 2000,
     .delay = 6,
     .ITI = 10,
     .phase = 0,
 };
 
-int waterLen = 50;
 int hit, miss, falseAlarm, correctRejection, abortTrial;
 int totalOutcomes;
 int currentMiss, correctRatio;
@@ -186,10 +184,6 @@ int matchornot(int respWindow) {
     }
     serialSend(1, n);
     return n;
-}
-
-void setWaterPortOpen(int i) {
-    PORTBbits.RB13 = i;
 }
 
 void sendLargeValue(int val) {

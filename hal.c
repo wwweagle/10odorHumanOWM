@@ -24,8 +24,9 @@ const _prog_addressT EE_Addr_G2 = 0x7ff000;
 void initPorts() {
     TRISA = 0x39FF;
     LATA = 0;
+    ADPCFG=0xFFFF;
     TRISB = 0x000F;
-    LATB = 0x00;
+    LATB = 0x000F;
     TRISC = 0xFFFF;
     LATC = 0;
     TRISD = 0xCF00;
@@ -57,61 +58,13 @@ inline void tick(unsigned int i) {
     PORTFbits.RF8 = (millisCounter % stateLED)>(stateLED / 2);
 }
 
-inline int filtered_G2(void) {
-    return (millisCounter > lick_G2.filter + 50u);
-}
-
 void __attribute__((__interrupt__, no_auto_psv)) _T1Interrupt(void) {
 
     tick(5u);
 
-    if (adcdata > lickThresh && lick_G2.current == 0 &&
-            filtered_G2()) { // HIGH is lick
-        lick_G2.filter = millisCounter;
-        lick_G2.current = LICKING_DETECTED;
-    } else if (adcdata > lickThresh && lick_G2.current == LICKING_DETECTED) {
-        if (millisCounter > lick_G2.filter + 5) {
-            lick_G2.stable = 1;
-            lick_G2.LCount++;
-            lick_G2.current = LICKING_SENT;
-            if (isSending) {
-                sendLick = 1;
-            } else {
-                serialSend(0, 2);
-                sendLick = 0;
-            }
-        }
-    } else if (adcdata <= lickThresh) {
-        lick_G2.current = 0;
-        lick_G2.stable = 0;
-        //  digitalWrite(38, LOW);
-    }
-    //  if (Serial.peek() == 0x2a) {
-    //    protectedSerialSend_G2(61, 0);
-    //    Timer1.detachInterrupt();
-    //    callResetGen2();
-    //  }
-    //  if(sendFID && (millis()>fidTimeStamp+500)){
-    //    fidTimeStamp=millis();
-    //    FIDtest();
-    //  }
-
-
-
-
 
     IFS0bits.T1IF = 0;
 }
-
-void __attribute__((__interrupt__, no_auto_psv)) _ADCInterrupt(void) {
-    adcdata = ADCBUF0; //RB14
-    IFS0bits.ADIF = 0; //After conversion ADIF is set to 1 and must be cleared
-}
-
-//void __attribute__((__interrupt__, no_auto_psv)) _U2TXInterrupt(void)
-// {
-//    IFS1bits.U2TXIF = 0;
-//}
 
 void wait_ms(int time) {
     uint32_t t32 = (uint32_t) time;
@@ -178,115 +131,6 @@ void serialSend(int u2Type, int u2Value) {
     sendLick = 0;
     isSending = 0;
 
-
-
-}
-
-void set4076_4bit(int val) {
-    PORTDbits.RD0 = (val & 0x1);
-    Nop();
-    Nop();
-    PORTDbits.RD1 = ((val & 0x2) >> 1);
-    Nop();
-    Nop();
-    PORTDbits.RD2 = ((val & 0x4) >> 2);
-    Nop();
-    Nop();
-    PORTDbits.RD3 = ((val & 0x8) >> 3);
-    Nop();
-    Nop();
-}
-
-void muxDis(int val) {
-    PORTDbits.RD12 = (val & 0x1);
-    Nop();
-    Nop();
-    PORTBbits.RB11 = ((val & 0x2) >> 1);
-    Nop();
-    Nop();
-    PORTBbits.RB10 = ((val & 0x4) >> 2);
-    Nop();
-    Nop();
-    PORTBbits.RB9 = ((val & 0x8) >> 3);
-    Nop();
-    Nop();
-}
-
-void initADC(void) {
-
-    ADPCFG = 0xBFFF;
-    ADCON2bits.SMPI = 1; //Interrupt on 2nd sample
-    ADCON2bits.CHPS = 0; //Sample Channel CH0
-    ADCON2bits.BUFM = 0; //    bit 1 BUFM: Buffer Mode Select bit
-    //1 = Buffer configured as two 8-word buffers ADCBUF(15...8), ADCBUF(7...0)
-    //0 = Buffer configured as one 16-word buffer ADCBUF(15...0.)
-
-
-    //    ADCHSbits.CH0SA = 0x0F;///CH0SA<3:0>: Channel 0 Positive Input Select for MUX A Multiplexer Setting bits
-    ADCHSbits.CH0NA = 0; //Select VREF- for CH0- input
-    ADCON2bits.CSCNA = 1; //Scan Input Selections for CH0+ S/H Input for MUX A Input Multiplexer Setting bit
-
-    ADCSSL = 0x4000; //CSSL<15:0>: A/D Input Pin Scan Selection bits
-    //1 = Select ANx for input scan
-    //0 = Skip ANx for input scan
-
-
-
-    ADCON1bits.ADSIDL = 1; //If ADSIDL = 1, the module will stop in Idle.
-    ADCON1bits.FORM = 0; //00 = Integer (DOUT = 0000 00dd dddd dddd)
-    ADCON1bits.SSRC = 7; //Conversion Trigger Source Select bits,Internal counter ends sampling and starts conversion (auto convert)
-
-    ADCON1bits.SAMP = 1; //SAMP: A/D Sample Enable bit //1 = At least one A/D sample/hold amplifier is sampling
-    ADCON1bits.ASAM = 1; //ASAM: A/D Sample Auto-Start bit
-    //1 = Sampling begins immediately after last conversion completes. SAMP bit is auto set
-    //0 = Sampling begins when SAMP bit set
-    ADCON2bits.VCFG = 0; //VCFG<2:0>: Voltage Reference Configuration bits 
-    //1 = Scan inputs
-    //0 = Do not scan inputs
-
-    //    The CSCNA bit
-    //(ADCON2<10>) enables the CH0 channel inputs to be scanned across a selected number of
-    //analog inputs. When CSCNA is set, the CH0SA<3:0> bits are ignored.
-
-
-
-    ADCON2bits.BUFM = 0; //    bit 1 BUFM: Buffer Mode Select bit
-    //1 = Buffer configured as two 8-word buffers ADCBUF(15...8), ADCBUF(7...0)
-    //0 = Buffer configured as one 16-word buffer ADCBUF(15...0.)
-
-    ADCON2bits.ALTS = 0; //ALTS: Alternate Input Sample Mode Select bit
-    //1 = Uses MUX A input multiplexer settings for first sample, then alternate between MUX B and MUX A input
-    //multiplexer settings for all subsequent samples
-    //0 = Always use MUX A input multiplexer settings
-
-    ADCON3bits.SAMC = 31; //Auto-Sample Time bits
-    //11111 = 31 TAD
-    //·····
-    //00001 = 1 TAD
-    //00000 = 0 TAD (only allowed if performing sequential conversions using more than one S/H amplifier)
-    ADCON3bits.ADRC = 0; //bit 7 ADRC: A/D Conversion Clock Source bit
-    //1 = A/D internal RC clock
-    //0 = Clock derived from system clock
-
-    ADCON3bits.ADCS = 31; //ADCS<5:0>: A/D Conversion Clock Select bits
-    //                    111111 = TCY/2 ? (ADCS<5:0> + 1) = 32 ? TCY
-    //                    ······
-    //                    000001 = TCY/2 ? (ADCS<5:0> + 1) = TCY
-    //                    000000 = TCY/2 ? (ADCS<5:0> + 1) = TCY/2
-
-    //For correct A/D conversions, the A/D conversion clock (TAD) must be selected to ensure a
-    //minimum TAD time of 83.33 nsec
-
-
-
-
-
-    IFS0bits.ADIF = 1;
-    IEC0bits.ADIE = 1;
-
-    ADCON1bits.ADON = 1; //ADON: A/D Operating Mode bit
-    //1 = A/D converter module is operating
-    //0 = A/D converter is off
 }
 
 void write_eeprom_G2(int offset, int value) {
@@ -304,17 +148,18 @@ int read_eeprom_G2(int offset) {
 }
 
 int checkKeyboard() {
+
     int out = 0;
-    if (PORTBbits.RB0==0) {
+    if (PORTBbits.RB0 == 0) {
         out += 1;
     }
-    if (PORTBbits.RB1==0) {
+    if (PORTBbits.RB1 == 0) {
         out += 2;
     }
-    if (PORTBbits.RB2==0) {
+    if (PORTBbits.RB2 == 0) {
         out += 4;
     }
-    if (PORTBbits.RB3==0) {
+    if (PORTBbits.RB3 == 0) {
         out += 8;
     }
     return out;

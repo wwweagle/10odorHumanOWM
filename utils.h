@@ -92,33 +92,6 @@ extern "C" {
 
 
 
-//#define SHAPING_TASK 10
-//#define DNMS_LEARNING_TASK 19
-//#define DNMS_TASK 20
-////#define _ASSOCIATE_SHAPING_TASK 24
-////#define _ASSOCIATE_TASK 25
-//#define GONOGO_TASK 30
-//#define DNMS_2AFC_TEACH 38
-//#define DNMS_LR_LEARNING_TASK 39
-//#define DNMS_2AFC_TASK 40
-//#define CAPACITY_LIMIT 44
-//#define Seq2AFC_TASK 48
-//#define Seq2AFC_TEACH 49
-//#define GONOGO_LR_TASK 50
-//#define NO_ODOR_CATCH_TRIAL_TASK 60
-////#define VARY_ODOR_LENGTH_TASK 70
-//#define DUAL_TASK_LEARNING 90
-//#define DUAL_TASK 93
-//#define DUAL_TASK_ON_OFF_LASER_TASK 95
-//#define DUAL_TASK_ODAP_ON_OFF_LASER_TASK 96
-//#define DUAL_TASK_DISTRx3_TASK 98
-//#define ODPA_SHAPING_TASK 99
-//#define ODPA_RD_SHAPING_TASK 100
-//#define ODPA_RD_TASK 102
-//#define ODPA_TASK 110
-//#define DNMS_DUAL_TASK_LEARNING 120
-//#define DNMS_DUAL_TASK 125
-//#define DUAL_TASK_EVERY_TRIAL  130
 #define HUMAN_ODPA_SHAPING 87
 #define HUMAN_ODPA_TASK 88
 #define HUMAN_DNMS_TASK 89
@@ -126,89 +99,6 @@ extern "C" {
 
 
 
-//
-//
-//
-//
-//
-//
-////Laser Session Type, including ZJ's variety
-//#define LASER_OTHER_TRIAL 1
-//#define LASER_NO_TRIAL 2
-//#define LASER_EVERY_TRIAL 3
-//#define LASER_CATCH_TRIAL 10
-////#define laserFollowOdorA 4
-////#define laserFollowOdorB 5
-////#define laser1and2Half 6
-////#define laser3and4Quarter 10
-//#define LASER_LR_EACH_QUARTER 20
-//#define LASER_EACH_QUARTER 21
-//#define LASER_12s_LR_EACH_QUARTER 25
-//#define LASER_12s_EACH_QUARTER 26
-//#define LASER_VARY_LENGTH 30
-//#define LASER_LR_EVERYTRIAL 40
-//#define LASER_LR_EVERY_OTHER_TRIAL 42
-//#define LASER_INCONGRUENT_CATCH_TRIAL 45
-//#define LASER_DUAL_TASK_ON_OFF 60
-//#define LASER_DUAL_TASK_ODAP_ON_OFF 61
-//#define LASER_AFTER_DISTR_3X 65
-//#define LASER_OTHER_BLOCK 80
-//#define LASER_SESS_UNDEFINED 100
-//
-//
-//
-//
-////laser trial type
-//#define LASER_OFF 0
-//#define laserDuring3Baseline 3
-//#define laserDuring4Baseline 4
-//#define laserDuringBaseline 5
-//#define laserDuringDelay_Odor2 6
-//#define laserDuringBaseAndResponse 7
-//#define laserDuringBaselineNDelay 9
-//#define laserDuringDelay 10
-//#define laserDuringDelayChR2 11
-//
-//#define laserRampDuringDelay 14
-////#define laserLDuringDelay 15
-////#define laserRDuringDelay 16
-//#define laserDuringOdor 20
-//#define laserDuring1stOdor 21
-//#define laserDuring2ndOdor 22
-//#define laserDuringBeginningToOneSecInITI 30
-//#define laserDuringEarlyDelay 40
-//#define laserDuringMidDelay 50
-//#define laserDuringLateDelay 60
-//#define laserNoDelayControlShort 69
-//#define laserNoDelayControl 70
-//#define laserDuringEarlyHalf 80
-//
-//#define laserDuringLateHalf 90
-//#define laserDuring1Quarter 91
-//#define laserDuring2Quarter 92
-//#define laserDuring3Quarter 93
-//#define laserDuring4Quarter 94
-//#define laserDuringResponseDelay 95
-//
-//#define laserDuring12s1Quarter 96
-//#define laserDuring12s2Quarter 97
-//#define laserDuring12s3Quarter 98
-//#define laserDuring12s4Quarter 99
-//
-//#define trialTypeDnmsSwitch 100
-//#define trialTypeGoNogoSwitch 110
-//#define laser4sRamp 121
-//#define laser2sRamp 122
-//#define laser1sRamp 123
-//#define laser_5sRamp 124
-//#define laserSufficiency 130
-//#define laserBeforeDistractor 140
-//#define laserCoverDistractor 145
-//#define laserAfterDistractorMax 151
-//#define laserAfterMultiDistractor 160
-//
-//
-//
 
 
 
@@ -289,7 +179,7 @@ typedef struct{
     int odorPairs;
     int *samples;
     int *tests;
-    int *odorlength;
+    int odorlength;
     int delay;
     int ITI;
     int phase;
@@ -314,7 +204,7 @@ extern TASK_T taskParam;
 
 extern TASK_H taskParamH;
 
-extern int waterLen,ITI;
+extern int ITI;
 
 extern int currentMiss, correctRatio, totalOutcomes;
 
