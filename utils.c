@@ -171,7 +171,8 @@ int getFuncNumber(int targetDigits, const char* message) {
     return n;
 }
 
-int matchornot(int respWindow) {
+int uartCheck(int respWindow) {
+    u2Received = -1;
     int n = -1;
     millisCounter = 0;
     while (millisCounter < respWindow) {

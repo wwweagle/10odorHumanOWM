@@ -35,7 +35,7 @@
 #include <stdint.h>
 
 int getFuncNumber(int targetDigits, const char* message);
-int matchornot(int respWindow);
+int uartCheck(int respWindow);
 
 
 #ifdef	__cplusplus
@@ -82,7 +82,7 @@ extern "C" {
 #define SpSess          61  // 1 start 0 end
 #define SpTrain         62  // 1 start 0 end
 //#define Splaser         65
-//
+#define SpOdor_C 66
 //#define SpLaserSwitch    79
 
 #define SpResponseCue 83

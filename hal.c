@@ -24,12 +24,12 @@ const _prog_addressT EE_Addr_G2 = 0x7ff000;
 void initPorts() {
     TRISA = 0x39FF;
     LATA = 0;
-    ADPCFG=0xFFFF;
+    ADPCFG = 0xFFFF;
     TRISB = 0x000F;
     LATB = 0x000F;
     TRISC = 0xFFFF;
     LATC = 0;
-    TRISD = 0xCF00;
+    TRISD = 0x0F00;
     LATD = 0x0;
     TRISE = 0;
     LATE = 0;
@@ -55,7 +55,12 @@ void initTMR1(void) {
 inline void tick(unsigned int i) {
     timerCounterI += (uint32_t) i;
     millisCounter += (uint32_t) i;
-    PORTFbits.RF8 = (millisCounter % stateLED)>(stateLED / 2);
+    PORTDbits.RD15 = (millisCounter % stateLED)>(stateLED / 2);
+    Nop();
+    Nop();
+    PORTDbits.RD14 = (millisCounter % stateLED)>(stateLED / 2);
+    Nop();
+    Nop();
 }
 
 void __attribute__((__interrupt__, no_auto_psv)) _T1Interrupt(void) {

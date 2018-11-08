@@ -17,6 +17,8 @@ void testOneValve(int n, int iti, int repeat);
 void testValveFast(int board, int valve, int keep);
 void DPASessionsHuman(int trialsPerSession, int totalSession);
 void DNMSessionsHuman(int totalSession);
+void gradTeach(int sessNum, int delay);
+void gradTest(int sessNum, int delay, int ITI);
 
 unsigned int taskType_G2 = HUMAN_DNMS_TASK;
 const char odorTypes_G2[] = "BYRQHNKLTXZdMAES0123456";
@@ -61,6 +63,7 @@ void callFunc(int n) {
             int v = getFuncNumber(2, "Valve?");
             int k = getFuncNumber(1, "Keep?");
             testValveFast(b, v, k);
+            break;
         }
 
         case 27:
@@ -87,6 +90,26 @@ void callFunc(int n) {
             //        }
 
         case 42:
+        case 102:
+        {
+            //Human Grad Teach
+            taskParamH.delay = getFuncNumber(2, "Delay duration");
+            int sessNum = getFuncNumber(2, "Session number?");
+            gradTeach(sessNum, taskParamH.delay);
+            break;
+        }
+        case 43:
+        case 104:
+        {
+            //Human Grad Test
+            taskParamH.delay = getFuncNumber(2, "Delay duration");
+            int sessNum = getFuncNumber(2, "Session number?");
+            taskParamH.ITI = getFuncNumber(2, "ITI");
+            gradTest(sessNum, taskParamH.delay, taskParamH.ITI);
+            break;
+        }
+        case 44:
+        case 108:
         {
             //Human DNMS
             taskType_G2 = HUMAN_DNMS_TASK;
@@ -99,7 +122,7 @@ void callFunc(int n) {
             break;
         }
         case 25:
-        case 101 ... 115:
+        case 101:
             stateLED = 512;
             splash_G2("Test", "Valves");
             ioRecycle();
@@ -130,6 +153,11 @@ void testValveFast(int board, int valve, int keep) {
         set2WayValve(valve, 1);
     } else if (board == 3) {
         set3WayValve(valve, 1);
+    } else if (board == 5) {
+        set2WayValve(valve, 1);
+        Nop();
+        Nop();
+        set3WayValve(valve, 1);
     }
 
     while (1) {
@@ -143,6 +171,15 @@ void testValveFast(int board, int valve, int keep) {
             } else if (board == 3) {
                 set3WayValve(valve, 1);
             }
+        } else if (valve >= 20) {
+            int v;
+            for (v = 1; v < 10; v++) {
+                if (v != (valve % 10)) {
+                    set3WayValve(v, 1);
+                    wait_ms(50);
+                }
+            }
+
         }
     }
 }
@@ -228,29 +265,29 @@ static void processMiss_G2(int id) {
 //    ++abortTrial;
 //}
 
-void waterNResult_H(int sampleIndex, int testIndex, int id, int rewardWindow) {
+void waterNResult_H(int sampleIndex, int testIndex, int rewardWindow) {
     int choice;
     splash_G2("1 for match", "2 for non-match");
-    for (timerCounterI = 0; timerCounterI < rewardWindow && (choice = matchornot(rewardWindow)) < 0;);
+    for (timerCounterI = 0; timerCounterI < rewardWindow && (choice = uartCheck(rewardWindow)) < 0;);
     taskTimeCounter = millisCounter;
     /////Reward
     if (choice != 1 && choice != 2) {
-        splash_G2("", "Missed");
-        processMiss_G2(0);
+        splash_G2("Missed", "");
+        processMiss_G2(1);
     } else if ((sampleIndex != testIndex && choice == 1)
             || (sampleIndex == testIndex && choice == 2)) {
-        splash_G2("", "Incorrect");
-        processFalse_G2(id);
+        splash_G2("Incorrect", "");
+        processFalse_G2(1);
     } else {
         splash_G2("Correct", "");
-        processHit_G2(id, 1);
+        processHit_G2(1, 1);
     }
 }
 
 static void human_Trial(int sampleIndex, int testIndex) {
     taskTimeCounter = millisCounter;
-    splash_G2("Sample", "");
     waitTaskTimer(3500u);
+    splash_G2("Sample", "");
     stim_H(1, taskParamH.samples[sampleIndex]);
     splash_G2("Delay", "");
     waitTaskTimer(1000u);
@@ -259,7 +296,7 @@ static void human_Trial(int sampleIndex, int testIndex) {
     waitTaskTimer(500u);
     stim_H(2, taskParamH.tests[testIndex]);
     splash_G2("", "");
-    waterNResult_H(sampleIndex, testIndex, 1, 5000);
+    waterNResult_H(sampleIndex, testIndex, 5000);
     ///--ITI1---///
     int trialITI;
     if (taskParamH.ITI >= 4u) {
@@ -445,6 +482,7 @@ void DNMSessionsHuman(int totalSession) {
     int currentTrial;
     int currentSession = 0;
     serialSend(SpTaskType, HUMAN_DNMS_TASK);
+    wait_ms(5000);
     while (currentSession++ < totalSession) {
         serialSend(SpSess, 1);
         hit = miss = falseAlarm = correctRejection = 0;
@@ -496,5 +534,79 @@ void ioRecycle() {
             set3WayValve(valve, 0);
             wait_ms(500);
         }
+    }
+}
+
+void gradTeach(int sessNum, int delay) {
+
+    int oIdx;
+    int sIdx;
+    wait_ms(5000);
+    for (sIdx = 0; sIdx < sessNum; sIdx++) {
+        for (oIdx = 1; oIdx <= 7; oIdx++) {
+            taskTimeCounter = millisCounter;
+            set3WayValve(oIdx, 1);
+            waitTaskTimer(500u);
+            set2WayValve(oIdx, 1);
+            serialSend(SpOdor_C, oIdx);
+            splash_G2("Gradient", "");
+            lcdWriteNumber_G2(oIdx, 1, 1);
+            waitTaskTimer(2000u);
+            set3WayValve(oIdx, 0);
+            set2WayValve(oIdx, 0);
+            serialSend(SpOdor_C, 0);
+            splash_G2("Pls_Wait", "");
+            waitTaskTimer(delay * 1000u);
+
+        }
+    }
+}
+
+void gradTest(int sessNum, int delay, int ITI) {
+    int rewardWindow = 5000;
+    int rawIdx, oIdx;
+    int sIdx;
+    wait_ms(5000);
+    for (sIdx = 0; sIdx < sessNum; sIdx++) {
+        serialSend(SpSess, sIdx + 1);
+        unsigned int *shuffledList = malloc(7 * sizeof (unsigned int));
+        shuffleArray_G2(shuffledList, 7u);
+        for (rawIdx = 1; rawIdx <= 7; rawIdx++) {
+            oIdx = shuffledList[rawIdx] + 1;
+            taskTimeCounter = millisCounter;
+            set3WayValve(oIdx, 1);
+            waitTaskTimer(500u);
+            set2WayValve(oIdx, 1);
+            serialSend(SpOdor_C, oIdx);
+            splash_G2("Gradient", "");
+            lcdWriteNumber_G2(0, 1, 1);
+            waitTaskTimer(2000u);
+            set3WayValve(oIdx, 0);
+            set2WayValve(oIdx, 0);
+            serialSend(SpOdor_C, 0);
+            splash_G2("Pls_Wait", "");
+            waitTaskTimer(delay * 1000u);
+
+
+            int choice;
+            splash_G2("Pls_Choose", "");
+            for (timerCounterI = 0; timerCounterI < rewardWindow && (choice = uartCheck(rewardWindow)) < 0;);
+            taskTimeCounter = millisCounter;
+            /////Reward
+            if (choice < 1 || choice > 7) {
+                splash_G2("Missed", "");
+                processMiss_G2(1);
+            } else if (choice != oIdx) {
+                splash_G2("Incorrect", "");
+                processFalse_G2(1);
+            } else {
+                splash_G2("Correct", "");
+                processHit_G2(1, 1);
+            }
+            taskTimeCounter = millisCounter;
+            waitTaskTimer((unsigned int) ITI * 1000u);
+            ////ITI
+        }
+        serialSend(SpSess, 0);
     }
 }
