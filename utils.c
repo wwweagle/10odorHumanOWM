@@ -261,7 +261,7 @@ void set2WayValve(int valve, int state) {
 void set3WayValve(int valve, int state) {
     switch (valve) {
         case 1:
-            PORTBbits.RB8 = state;
+            PORTDbits.RD12 = state;
             break;
         case 2:
             PORTBbits.RB9 = state;

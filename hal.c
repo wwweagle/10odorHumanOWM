@@ -18,14 +18,70 @@ volatile int isSending;
 volatile int sendLick;
 int lickThresh = 400; // larger is more sensitive
 int stateLED = 1024;
+//int hundMS=0;
 
 const _prog_addressT EE_Addr_G2 = 0x7ff000;
 
 void initPorts() {
+    ADPCFG = 0xFEFF;
+    ADCSSL = 0x0100;
+    //1 = Select ANx for input scan
+    //0 = Skip ANx for input scan
+
+    ADCON2bits.SMPI = 0x0f; //Interrupt on 2nd sample
+    ADCON2bits.CHPS = 0; //Sample Channel CH0
+    ADCON2bits.BUFM = 0; //    bit 1 BUFM: Buffer Mode Select bit
+    //1 = Buffer configured as two 8-word buffers ADCBUF(15...8), ADCBUF(7...0)
+    //0 = Buffer configured as one 16-word buffer ADCBUF(15...0.)
+    ADCON2bits.CSCNA = 1; //Scan Input Selections for CH0+ S/H Input for MUX A Input Multiplexer Setting bit
+    //    The CSCNA bit
+    //(ADCON2<10>) enables the CH0 channel inputs to be scanned across a selected number of
+    //analog inputs. When CSCNA is set, the CH0SA<3:0> bits are ignored.
+
+    ADCHSbits.CH0NA = 0; //Select VREF- for CH0- input
+
+    ADCON1bits.ADSIDL = 1; //If ADSIDL = 1, the module will stop in Idle.
+    ADCON1bits.FORM = 0; //00 = Integer (DOUT = 0000 00dd dddd dddd)
+    ADCON1bits.SSRC = 7; //Conversion Trigger Source Select bits,Internal counter ends sampling and starts conversion (auto convert)
+
+    ADCON1bits.SAMP = 1; //SAMP: A/D Sample Enable bit //1 = At least one A/D sample/hold amplifier is sampling
+    ADCON1bits.ASAM = 1; //ASAM: A/D Sample Auto-Start bit
+    //1 = Sampling begins immediately after last conversion completes. SAMP bit is auto set
+    //0 = Sampling begins when SAMP bit set
+    ADCON2bits.VCFG = 0; //VCFG<2:0>: Voltage Reference Configuration bits 0=AVDD/AVSS
+
+    ADCON2bits.ALTS = 0; //ALTS: Alternate Input Sample Mode Select bit
+    //1 = Uses MUX A input multiplexer settings for first sample, then alternate between MUX B and MUX A input
+    //multiplexer settings for all subsequent samples
+    //0 = Always use MUX A input multiplexer settings
+
+    ADCON3bits.SAMC = 31; //Auto-Sample Time bits
+    //11111 = 31 TAD
+    //·····
+    //00001 = 1 TAD
+    //00000 = 0 TAD (only allowed if performing sequential conversions using more than one S/H amplifier)
+    ADCON3bits.ADRC = 0; //bit 7 ADRC: A/D Conversion Clock Source bit
+    //1 = A/D internal RC clock
+    //0 = Clock derived from system clock
+
+    ADCON3bits.ADCS = 31; //ADCS<5:0>: A/D Conversion Clock Select bits
+    //                    111111 = TCY/2 ? (ADCS<5:0> + 1) = 32 ? TCY
+    //                    ······
+    //                    000001 = TCY/2 ? (ADCS<5:0> + 1) = TCY
+    //                    000000 = TCY/2 ? (ADCS<5:0> + 1) = TCY/2
+
+
+    IFS0bits.ADIF = 1;
+    IEC0bits.ADIE = 1;
+
+    ADCON1bits.ADON = 1; //ADON: A/D Operating Mode bit
+    //1 = A/D converter module is operating
+    //0 = A/D converter is off
+
+
     TRISA = 0x39FF;
     LATA = 0;
-    ADPCFG = 0xFFFF;
-    TRISB = 0x000F;
+    TRISB = 0x010F;
     LATB = 0x000F;
     TRISC = 0xFFFF;
     LATC = 0;
@@ -38,6 +94,11 @@ void initPorts() {
     TRISG = 0xFCFF;
     LATG = 0;
 
+}
+
+void __attribute__((__interrupt__, no_auto_psv)) _ADCInterrupt(void) {
+    adcdata = ADCBUF0; //RB14
+    IFS0bits.ADIF = 0; //After conversion ADIF is set to 1 and must be cleared
 }
 
 void initTMR1(void) {
@@ -63,12 +124,20 @@ inline void tick(unsigned int i) {
     Nop();
 }
 
+void sendChart(int val, int idx) {
+    int high = ((val & 0x0fc0) >> 6)+(idx == 1 ? 0x40 : 0);
+    serialSend(SpChartHigh, high);
+    int low = (val & 0x3f)+(idx == 1 ? 0x40 : 0);
+    serialSend(SpChartLow, low);
+}
+
 void __attribute__((__interrupt__, no_auto_psv)) _T1Interrupt(void) {
-
     tick(5u);
-
-
     IFS0bits.T1IF = 0;
+    if (millisCounter % 100u == 0) {
+//        sendLargeValue(adcdata);
+        sendChart(adcdata, 0);
+    }
 }
 
 void wait_ms(int time) {
