@@ -88,7 +88,8 @@ extern "C" {
 #define SpResponseCue 83
 #define SpAbortTrial 84
 #define SpCorrectionCue 85
-
+#define SpChoice 89
+#define SpConfidence 90
 
 
 

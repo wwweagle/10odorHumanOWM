@@ -276,9 +276,15 @@ void waterNResult_H(int sampleIndex, int testIndex, int rewardWindow) {
         processMiss_G2(1);
     } else if ((sampleIndex != testIndex && choice == 1)
             || (sampleIndex == testIndex && choice == 2)) {
+        serialSend(SpChoice, choice);
+        int c = getFuncNumber(1, "Confidence?");
+        serialSend(SpConfidence, c);
         splash_G2("Incorrect", "");
         processFalse_G2(1);
     } else {
+        serialSend(SpChoice, choice);
+        int c = getFuncNumber(1, "Confidence");
+        serialSend(SpConfidence, c);
         splash_G2("Correct", "");
         processHit_G2(1, 1);
     }
@@ -286,14 +292,16 @@ void waterNResult_H(int sampleIndex, int testIndex, int rewardWindow) {
 
 static void human_Trial(int sampleIndex, int testIndex) {
     taskTimeCounter = millisCounter;
-    waitTaskTimer(3500u);
+    waitTaskTimer(2000u);
+    splash_G2("OdorPrime","");
+    waitTaskTimer(1500u);
     splash_G2("Sample", "");
     stim_H(1, taskParamH.samples[sampleIndex]);
     splash_G2("Delay", "");
-    waitTaskTimer(1000u);
     waitTaskTimer(taskParamH.delay * 1000u - 2000u);
+    splash_G2("OdorPrime","");
+    waitTaskTimer(1500u);
     splash_G2("Test", "");
-    waitTaskTimer(500u);
     stim_H(2, taskParamH.tests[testIndex]);
     splash_G2("", "");
     waterNResult_H(sampleIndex, testIndex, 5000);
@@ -545,6 +553,8 @@ void gradTeach(int sessNum, int delay) {
     for (sIdx = 0; sIdx < sessNum; sIdx++) {
         for (oIdx = 1; oIdx <= 7; oIdx++) {
             taskTimeCounter = millisCounter;
+            splash_G2("OdorPrime","");
+            waitTaskTimer(1500u);
             set3WayValve(oIdx, 1);
             waitTaskTimer(500u);
             set2WayValve(oIdx, 1);
@@ -556,7 +566,7 @@ void gradTeach(int sessNum, int delay) {
             set2WayValve(oIdx, 0);
             serialSend(SpOdor_C, 0);
             splash_G2("Pls_Wait", "");
-            waitTaskTimer(delay * 1000u);
+            waitTaskTimer(delay * 1000u-2000u);
 
         }
     }
@@ -574,6 +584,8 @@ void gradTest(int sessNum, int delay, int ITI) {
         for (rawIdx = 1; rawIdx <= 7; rawIdx++) {
             oIdx = shuffledList[rawIdx] + 1;
             taskTimeCounter = millisCounter;
+            splash_G2("OdorPrime","");
+            waitTaskTimer(1500u);
             set3WayValve(oIdx, 1);
             waitTaskTimer(500u);
             set2WayValve(oIdx, 1);
@@ -594,17 +606,24 @@ void gradTest(int sessNum, int delay, int ITI) {
             taskTimeCounter = millisCounter;
             /////Reward
             if (choice < 1 || choice > 7) {
+                serialSend(SpChoice, 0);
                 splash_G2("Missed", "");
                 processMiss_G2(1);
             } else if (choice != oIdx) {
+                serialSend(SpChoice, choice);
+                int c = getFuncNumber(1, "Confidence?");
+                serialSend(SpConfidence, c);
                 splash_G2("Incorrect", "");
                 processFalse_G2(1);
             } else {
+                serialSend(SpChoice, choice);
+                int c = getFuncNumber(1, "Confidence?");
+                serialSend(SpConfidence, c);
                 splash_G2("Correct", "");
                 processHit_G2(1, 1);
             }
             taskTimeCounter = millisCounter;
-            waitTaskTimer((unsigned int) ITI * 1000u);
+            waitTaskTimer((unsigned int) ITI * 1000u-2000u);
             ////ITI
         }
         serialSend(SpSess, 0);

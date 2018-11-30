@@ -15,7 +15,7 @@ uint32_t timerCounterI, millisCounter, taskTimeCounter;
 int u2Received = -1;
 volatile int adcdata;
 volatile int isSending;
-volatile int sendLick;
+volatile int sendADC;
 int lickThresh = 400; // larger is more sensitive
 int stateLED = 1024;
 //int hundMS=0;
@@ -135,8 +135,10 @@ void __attribute__((__interrupt__, no_auto_psv)) _T1Interrupt(void) {
     tick(5u);
     IFS0bits.T1IF = 0;
     if (millisCounter % 100u == 0) {
-//        sendLargeValue(adcdata);
-        sendChart(adcdata, 0);
+        if (!isSending)
+            sendChart(adcdata, 0);
+        else
+            sendADC = 1;
     }
 }
 
@@ -188,7 +190,6 @@ void __attribute__((interrupt, no_auto_psv)) _U2RXInterrupt(void) {
 }
 
 void serialSend(int u2Type, int u2Value) {
-
     isSending = 1;
     while (BusyUART2());
     U2TXREG = (unsigned char) (u2Type & 0x7f);
@@ -196,13 +197,18 @@ void serialSend(int u2Type, int u2Value) {
     U2TXREG = (unsigned char) (u2Value | 0x80);
     while (BusyUART2());
 
-    if (sendLick) {
-        U2TXREG = (unsigned char) (0);
+    if (sendADC) {
+        U2TXREG = (unsigned char) (SpChartHigh);
         while (BusyUART2());
-        U2TXREG = (unsigned char) (2 | 0x80);
+        U2TXREG = (unsigned char) (((adcdata & 0x0fc0) >> 6) | 0x80);
         while (BusyUART2());
+
+        U2TXREG = (unsigned char) (SpChartLow);
+        while (BusyUART2());
+        U2TXREG = (unsigned char) ((adcdata & 0x3f) | 0x80);
+        while (BusyUART2());
+        sendADC = 0;
     }
-    sendLick = 0;
     isSending = 0;
 
 }
