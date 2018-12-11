@@ -582,7 +582,7 @@ void gradTest(int sessNum, int delay, int ITI) {
         unsigned int *shuffledList = malloc(7 * sizeof (unsigned int));
         shuffleArray_G2(shuffledList, 7u);
         for (rawIdx = 1; rawIdx <= 7; rawIdx++) {
-            oIdx = shuffledList[rawIdx] + 1;
+            oIdx = shuffledList[rawIdx-1] + 1;
             taskTimeCounter = millisCounter;
             splash_G2("OdorPrime","");
             waitTaskTimer(1500u);
