@@ -17,8 +17,8 @@ void testOneValve(int n, int iti, int repeat);
 void testValveFast(int board, int valve, int keep);
 void DPASessionsHuman(int trialsPerSession, int totalSession);
 void DNMSessionsHuman(int totalSession);
-void gradTeach(int sessNum, int delay);
-void gradTest(int sessNum, int delay, int ITI);
+void mixTeach(int sessNum, int delay);
+void mixTest(int sessNum, int delay, int ITI);
 
 unsigned int taskType_G2 = HUMAN_DNMS_TASK;
 const char odorTypes_G2[] = "BYRQHNKLTXZdMAES0123456";
@@ -95,7 +95,7 @@ void callFunc(int n) {
             //Human Grad Teach
             taskParamH.delay = getFuncNumber(2, "Delay duration");
             int sessNum = getFuncNumber(2, "Session number?");
-            gradTeach(sessNum, taskParamH.delay);
+            mixTeach(sessNum, taskParamH.delay);
             break;
         }
         case 43:
@@ -105,7 +105,7 @@ void callFunc(int n) {
             taskParamH.delay = getFuncNumber(2, "Delay duration");
             int sessNum = getFuncNumber(2, "Session number?");
             taskParamH.ITI = getFuncNumber(2, "ITI");
-            gradTest(sessNum, taskParamH.delay, taskParamH.ITI);
+            mixTest(sessNum, taskParamH.delay, taskParamH.ITI);
             break;
         }
         case 44:
@@ -293,13 +293,13 @@ void waterNResult_H(int sampleIndex, int testIndex, int rewardWindow) {
 static void human_Trial(int sampleIndex, int testIndex) {
     taskTimeCounter = millisCounter;
     waitTaskTimer(2000u);
-    splash_G2("OdorPrime","");
+    splash_G2("OdorPrime", "");
     waitTaskTimer(1500u);
     splash_G2("Sample", "");
     stim_H(1, taskParamH.samples[sampleIndex]);
     splash_G2("Delay", "");
     waitTaskTimer(taskParamH.delay * 1000u - 2000u);
-    splash_G2("OdorPrime","");
+    splash_G2("OdorPrime", "");
     waitTaskTimer(1500u);
     splash_G2("Test", "");
     stim_H(2, taskParamH.tests[testIndex]);
@@ -545,15 +545,16 @@ void ioRecycle() {
     }
 }
 
-void gradTeach(int sessNum, int delay) {
+void mixTeach(int sessNum, int delay) {
 
     int oIdx;
     int sIdx;
     wait_ms(5000);
     for (sIdx = 0; sIdx < sessNum; sIdx++) {
-        for (oIdx = 1; oIdx <= 7; oIdx++) {
+        //        for (oIdx = 1; oIdx <= 7; oIdx++) {
+        for (oIdx = 1; oIdx <= 3; oIdx++) {
             taskTimeCounter = millisCounter;
-            splash_G2("OdorPrime","");
+            splash_G2("OdorPrime", "");
             waitTaskTimer(1500u);
             set3WayValve(oIdx, 1);
             waitTaskTimer(500u);
@@ -566,25 +567,30 @@ void gradTeach(int sessNum, int delay) {
             set2WayValve(oIdx, 0);
             serialSend(SpOdor_C, 0);
             splash_G2("Pls_Wait", "");
-            waitTaskTimer(delay * 1000u-2000u);
+            waitTaskTimer(delay * 1000u - 2000u);
+
+
 
         }
     }
 }
 
-void gradTest(int sessNum, int delay, int ITI) {
+void mixTest(int sessNum, int delay, int ITI) {
     int rewardWindow = 5000;
     int rawIdx, oIdx;
     int sIdx;
     wait_ms(5000);
     for (sIdx = 0; sIdx < sessNum; sIdx++) {
         serialSend(SpSess, sIdx + 1);
-        unsigned int *shuffledList = malloc(7 * sizeof (unsigned int));
-        shuffleArray_G2(shuffledList, 7u);
-        for (rawIdx = 1; rawIdx <= 7; rawIdx++) {
-            oIdx = shuffledList[rawIdx-1] + 1;
+        //        unsigned int *shuffledList = malloc(7 * sizeof (unsigned int));
+        unsigned int *shuffledList = malloc(3 * sizeof (unsigned int));
+        //        shuffleArray_G2(shuffledList, 7u);
+        shuffleArray_G2(shuffledList, 3u);
+        //        for (rawIdx = 1; rawIdx <= 7; rawIdx++) {
+        for (rawIdx = 1; rawIdx <= 3; rawIdx++) {
+            oIdx = shuffledList[rawIdx - 1] + 1;
             taskTimeCounter = millisCounter;
-            splash_G2("OdorPrime","");
+            splash_G2("OdorPrime", "");
             waitTaskTimer(1500u);
             set3WayValve(oIdx, 1);
             waitTaskTimer(500u);
@@ -605,7 +611,9 @@ void gradTest(int sessNum, int delay, int ITI) {
             for (timerCounterI = 0; timerCounterI < rewardWindow && (choice = uartCheck(rewardWindow)) < 0;);
             taskTimeCounter = millisCounter;
             /////Reward
-            if (choice < 1 || choice > 7) {
+            //            if (choice < 1 || choice > 7) {
+
+            if (choice < 1 || choice > 3) {
                 serialSend(SpChoice, 0);
                 splash_G2("Missed", "");
                 processMiss_G2(1);
@@ -623,7 +631,7 @@ void gradTest(int sessNum, int delay, int ITI) {
                 processHit_G2(1, 1);
             }
             taskTimeCounter = millisCounter;
-            waitTaskTimer((unsigned int) ITI * 1000u-2000u);
+            waitTaskTimer((unsigned int) ITI * 1000u - 2000u);
             ////ITI
         }
         serialSend(SpSess, 0);
